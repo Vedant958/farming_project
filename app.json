@@ -1,0 +1,70 @@
+{
+  "name": "Smart Farming AI Agent",
+  "description": "An AI Agent for Smart Farming Advice powered by RAG and IBM Granite. Delivers real-time, localized agricultural guidance to small-scale farmers including weather forecasts, soil conditions, crop recommendations, pest control measures, and current mandi market prices.",
+  "version": "1.0.0",
+  "author": {
+    "name": "Vedant Varshney",
+    "email": "vedantvarshney958@gmail.com",
+    "phone": "+91-7900427390"
+  },
+  "problem_statement": {
+    "number": 9,
+    "title": "AI Agent for Smart Farming Advice",
+    "domain": "Agriculture / AgriTech / Smart Farming"
+  },
+  "ibm_technologies": {
+    "model": "ibm/granite-3-3-8b-instruct",
+    "platform": "IBM watsonx.ai",
+    "infrastructure": "IBM Cloud Lite",
+    "orchestration": "LangFlow",
+    "vector_db": "FAISS / Chroma",
+    "rag": true
+  },
+  "agents": [
+    {
+      "name": "Weather & Forecast Agent",
+      "description": "Retrieves real-time weather forecasts and provides crop-specific advisories",
+      "tools": ["OpenWeather API"]
+    },
+    {
+      "name": "Soil & Crop Advisory Agent",
+      "description": "Analyzes soil conditions and recommends crops based on season and region",
+      "tools": ["AgriDB RAG Tool", "FAISS Vector Store"]
+    },
+    {
+      "name": "Pest Control Agent",
+      "description": "Provides pest management strategies from trusted agricultural sources",
+      "tools": ["Pest DB RAG Tool", "FAISS Vector Store"]
+    },
+    {
+      "name": "Market Price Agent",
+      "description": "Delivers live mandi rates for crops from Agmarknet",
+      "tools": ["Agmarknet API"]
+    }
+  ],
+  "features": [
+    "Multilingual farmer interaction in regional Indian languages",
+    "RAG-based real-time data retrieval for accuracy",
+    "Multi-agent orchestration via LangFlow",
+    "IBM Granite for natural language understanding and generation",
+    "Live mandi price integration",
+    "Weather-aware crop advisory",
+    "Pest control guidance with organic and chemical remedies"
+  ],
+  "setup": {
+    "requirements": "See requirements.txt",
+    "langflow_workflow": "langflow_workflow.json",
+    "environment_variables": [
+      "WATSONX_API_KEY",
+      "WATSONX_PROJECT_ID",
+      "WATSONX_URL",
+      "OPENWEATHER_API_KEY",
+      "AGMARKNET_API_KEY"
+    ]
+  },
+  "github": "https://github.com/Vedant958/farming_project",
+  "submission": {
+    "event": "IBM University Engagement",
+    "year": 2026
+  }
+}

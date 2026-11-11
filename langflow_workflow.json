@@ -1,0 +1,156 @@
+{
+  "id": "smart-farming-ai-agent-workflow",
+  "name": "Smart Farming AI Agent",
+  "description": "Multi-agent LangFlow workflow for Smart Farming Advice using IBM Granite and RAG",
+  "version": "1.0",
+  "nodes": [
+    {
+      "id": "chat_input_1",
+      "type": "ChatInput",
+      "display_name": "Chat Input",
+      "description": "Farmer enters query in local language",
+      "position": { "x": 400, "y": 50 },
+      "outputs": ["orchestrator_agent_1"]
+    },
+    {
+      "id": "orchestrator_agent_1",
+      "type": "WatsonxAIAgent",
+      "display_name": "IBM Watsonx AI Agent (Orchestrator)",
+      "description": "Routes farmer query to appropriate specialized agent",
+      "model": "ibm/granite-3-3-8b-instruct",
+      "system_prompt": "You are a Smart Farming AI orchestrator. Analyze the farmer's query and route it to the appropriate agent: WeatherAgent for weather/forecast queries, SoilCropAgent for crop/soil queries, PestControlAgent for pest/disease queries, MarketPriceAgent for price/mandi queries. Always respond in the farmer's language.",
+      "position": { "x": 400, "y": 200 },
+      "inputs": ["chat_input_1"],
+      "outputs": ["weather_agent_1", "soil_crop_agent_1", "pest_control_agent_1", "market_price_agent_1"]
+    },
+    {
+      "id": "weather_agent_1",
+      "type": "WatsonxAIAgent",
+      "display_name": "Weather & Forecast Agent",
+      "description": "Retrieves real-time weather data and provides crop advisories",
+      "model": "ibm/granite-3-3-8b-instruct",
+      "system_prompt": "You are a Weather Advisory Agent for Indian farmers. Use weather data to advise on irrigation timing, frost alerts, sowing windows, and weather-based crop protection. Always include temperature, humidity, and rainfall forecasts relevant to farming.",
+      "position": { "x": 100, "y": 400 },
+      "tools": ["openweather_api_tool"],
+      "inputs": ["orchestrator_agent_1"],
+      "outputs": ["response_aggregator_1"]
+    },
+    {
+      "id": "soil_crop_agent_1",
+      "type": "WatsonxAIAgent",
+      "display_name": "Soil & Crop Advisory Agent",
+      "description": "Recommends crops based on soil type, season, and region using RAG",
+      "model": "ibm/granite-3-3-8b-instruct",
+      "system_prompt": "You are a Soil and Crop Advisory Agent for Indian farmers. Recommend suitable crops based on soil type (black, red, alluvial, laterite), season (Kharif/Rabi/Zaid), and region. Provide specific seed varieties, fertilizer dosage, and irrigation schedule.",
+      "position": { "x": 300, "y": 400 },
+      "tools": ["agri_rag_tool"],
+      "inputs": ["orchestrator_agent_1"],
+      "outputs": ["response_aggregator_1"]
+    },
+    {
+      "id": "pest_control_agent_1",
+      "type": "WatsonxAIAgent",
+      "display_name": "Pest Control Agent",
+      "description": "Provides pest identification and management strategies via RAG",
+      "model": "ibm/granite-3-3-8b-instruct",
+      "system_prompt": "You are a Pest Control Agent for Indian farmers. Identify pests and diseases from descriptions, recommend organic and chemical remedies with dosage, application timing, and safety precautions. Mention government-approved pesticides only.",
+      "position": { "x": 500, "y": 400 },
+      "tools": ["pest_db_rag_tool"],
+      "inputs": ["orchestrator_agent_1"],
+      "outputs": ["response_aggregator_1"]
+    },
+    {
+      "id": "market_price_agent_1",
+      "type": "WatsonxAIAgent",
+      "display_name": "Market Price Agent",
+      "description": "Fetches live mandi rates from Agmarknet API",
+      "model": "ibm/granite-3-3-8b-instruct",
+      "system_prompt": "You are a Market Price Agent for Indian farmers. Fetch current mandi rates for crops from Agmarknet. Provide today's minimum, maximum, and modal price per quintal for the requested crop and nearest market. Advise on best time to sell based on price trends.",
+      "position": { "x": 700, "y": 400 },
+      "tools": ["agmarknet_api_tool"],
+      "inputs": ["orchestrator_agent_1"],
+      "outputs": ["response_aggregator_1"]
+    },
+    {
+      "id": "response_aggregator_1",
+      "type": "PromptTemplate",
+      "display_name": "Response Aggregator",
+      "description": "Merges all agent outputs into a coherent farmer-friendly response",
+      "template": "Combine the following agent responses into a single, clear, actionable response for the farmer. Use simple language. Translate to {language} if needed:\n\n{agent_responses}",
+      "position": { "x": 400, "y": 600 },
+      "inputs": ["weather_agent_1", "soil_crop_agent_1", "pest_control_agent_1", "market_price_agent_1"],
+      "outputs": ["granite_final_1"]
+    },
+    {
+      "id": "granite_final_1",
+      "type": "WatsonxLLM",
+      "display_name": "IBM Granite - Final Response Generator",
+      "description": "Generates final multilingual farming advice response",
+      "model": "ibm/granite-3-3-8b-instruct",
+      "parameters": {
+        "max_new_tokens": 512,
+        "temperature": 0.3,
+        "top_p": 0.9,
+        "repetition_penalty": 1.1
+      },
+      "position": { "x": 400, "y": 750 },
+      "inputs": ["response_aggregator_1"],
+      "outputs": ["chat_output_1"]
+    },
+    {
+      "id": "chat_output_1",
+      "type": "ChatOutput",
+      "display_name": "Chat Output",
+      "description": "Farmer receives answer in their local language",
+      "position": { "x": 400, "y": 900 },
+      "inputs": ["granite_final_1"]
+    },
+    {
+      "id": "agri_knowledge_base",
+      "type": "FAISSVectorStore",
+      "display_name": "Agricultural Knowledge Base (RAG)",
+      "description": "Vector store containing embedded agricultural documents, soil data, crop guides",
+      "embedding_model": "ibm/slate-125m-english-rtrvr",
+      "documents": [
+        "ICAR crop recommendations",
+        "Soil health card data",
+        "State agriculture department guidelines",
+        "Krishi Vigyan Kendra advisories"
+      ],
+      "position": { "x": 150, "y": 600 }
+    }
+  ],
+  "tools": [
+    {
+      "id": "openweather_api_tool",
+      "type": "APITool",
+      "name": "OpenWeather API",
+      "url": "https://api.openweathermap.org/data/2.5/forecast",
+      "auth": "OPENWEATHER_API_KEY"
+    },
+    {
+      "id": "agri_rag_tool",
+      "type": "RAGTool",
+      "name": "AgriDB RAG Tool",
+      "vector_store": "agri_knowledge_base"
+    },
+    {
+      "id": "pest_db_rag_tool",
+      "type": "RAGTool",
+      "name": "Pest DB RAG Tool",
+      "vector_store": "agri_knowledge_base"
+    },
+    {
+      "id": "agmarknet_api_tool",
+      "type": "APITool",
+      "name": "Agmarknet API",
+      "url": "https://agmarknet.gov.in/SearchCmmMkt.aspx",
+      "auth": "AGMARKNET_API_KEY"
+    }
+  ],
+  "ibm_config": {
+    "watsonx_url": "https://us-south.ml.cloud.ibm.com",
+    "project_id": "YOUR_WATSONX_PROJECT_ID",
+    "api_key": "YOUR_WATSONX_API_KEY"
+  }
+}
